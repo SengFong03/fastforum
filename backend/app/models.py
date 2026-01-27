@@ -20,6 +20,7 @@ class Post(Base):
     )
     owner = relationship("User")
     comments = relationship("Comment", back_populates="post")
+    ai_summary = Column(String, nullable=True)
 
 
 class User(Base):

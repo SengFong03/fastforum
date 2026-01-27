@@ -22,7 +22,15 @@ def summarize_post(
             detail=f"Post with id {post_id} does not exist",
         )
     
+    if post.ai_summary:
+        return {"post_id": post_id, "summary": post.ai_summary}
+    
     # Call to AI service to summarize the post content
     summary = generate_summary(title=post.title, content=post.content)
+
+    post.ai_summary = summary
+    db.add(post)     # 标记修改
+    db.commit()      # 提交保存
+    db.refresh(post) # 刷新数据
 
     return {"post_id": post_id, "summary": summary}

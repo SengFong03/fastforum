@@ -1,182 +1,175 @@
 // src/App.jsx
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { Toaster, toast } from "react-hot-toast";
+
+// 引入样式
 import "./App.css";
+
+// 引入组件 (我们刚拆分的)
+import Navbar from "./components/Navbar";
+import SearchBar from "./components/SearchBar";
+import Login from "./components/Login";
+import Register from "./components/Register";
 import CreatePost from "./components/CreatePost";
 import Post from "./components/Post";
-import Login from "./components/Login"; // 👈 新增
-import Register from "./components/Register"; // 👈 新增
-import { Toaster, toast } from "react-hot-toast"; // 👈 记得引入 toast 用于登出提示
 
 function App() {
+  // === 1. 状态管理 (逻辑保持原样) ===
   const [posts, setPosts] = useState([]);
-
-  // 🔐 1. 状态管理：检查有没有 Token，以及是否在注册页面
   const [token, setToken] = useState(localStorage.getItem("token"));
-  const [isRegistering, setIsRegistering] = useState(false);
-
+  // isRegistering 被 view 替代了，这里删掉也没事，或者你留着也不影响
   const [view, setView] = useState("feed");
+  const [keyword, setKeyword] = useState("");
 
-  // 📡 获取帖子列表 (这个可以公开，不需要 Token也能看)
+  // === 2. 核心副作用：获取数据 (逻辑保持原样) ===
   useEffect(() => {
+    // 没登录，清空列表，直接返回
+    if (!token) {
+      console.log("No token, skipping authenticated fetch.");
+      setPosts([]);
+      return;
+    }
+
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:8000/posts");
-        // console.log("数据拿到啦:", response.data);
+        const config = token
+          ? {
+              headers: { Authorization: `Bearer ${token}` },
+              params: { search: keyword },
+            }
+          : {};
+
+        const response = await axios.get("http://127.0.0.1:8000/posts", config);
         setPosts(response.data);
       } catch (error) {
-        console.error("出错了:", error);
-        toast.error("无法连接到服务器");
+        console.error("Error", error);
+        if (error.response && error.response.status === 401) {
+          handleLogout();
+        } else {
+          toast.error("Failed to fetch posts");
+        }
       }
     };
-    fetchData();
-  }, []);
 
-  // ✅ 登录成功处理函数
+    // 防抖逻辑
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [token, keyword]);
+
+  // === 3. 事件处理 (逻辑保持原样) ===
   const handleLoginSuccess = (accessToken) => {
-    localStorage.setItem("token", accessToken); // 存进浏览器
-    setToken(accessToken); // 更新状态，React 会自动刷新界面
+    localStorage.setItem("token", accessToken);
+    setToken(accessToken);
     setView("feed");
   };
 
-  // 🚪 登出处理函数
   const handleLogout = () => {
-    localStorage.removeItem("token"); // 清除浏览器缓存
-    setToken(null); // 清空状态
+    localStorage.removeItem("token");
+    setToken(null);
     toast.success("Logged out successfully");
   };
 
-  // ➕ 新增帖子处理
   const handleNewPost = (newPostWrapper) => {
     setPosts([newPostWrapper, ...posts]);
   };
 
-  // 🗑️ 删除帖子处理
   const handleRemovePost = (deletedId) => {
     const updatedPosts = posts.filter((item) => item.Post.id !== deletedId);
     setPosts(updatedPosts);
   };
 
+  // === 4. 辅助渲染函数 (让 return 更干净) ===
+
+  // 渲染登录/注册页面
+  const renderAuthView = () => {
+    if (view === "login") {
+      return (
+        <div style={{ maxWidth: "400px", margin: "0 auto" }}>
+          <Login
+            onLogin={handleLoginSuccess}
+            onSwitchToRegister={() => setView("register")}
+          />
+          <p className="back-link">
+            <span onClick={() => setView("feed")}>← Back to Feed</span>
+          </p>
+        </div>
+      );
+    }
+    if (view === "register") {
+      return (
+        <div style={{ maxWidth: "400px", margin: "0 auto" }}>
+          <Register onSwitchToLogin={() => setView("login")} />
+          <p className="back-link">
+            <span onClick={() => setView("feed")}>← Back to Feed</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // 渲染 Feed 内容 (未登录提示 或 帖子列表)
+  const renderFeed = () => {
+    // 情况 A: 没登录 -> 显示大大的提示框
+    if (!token) {
+      return (
+        <div className="auth-prompt-container">
+          <h2 className="auth-prompt-title">Welcome to FastForum 🚀</h2>
+          <p className="auth-prompt-text">
+            Please login to view posts and use AI features.
+          </p>
+          <button className="auth-prompt-btn" onClick={() => setView("login")}>
+            Login Now
+          </button>
+        </div>
+      );
+    }
+
+    // 情况 B: 已登录 -> 显示搜索栏、发帖框、列表
+    return (
+      <>
+        {/* 🌟 搜索栏组件 */}
+        <SearchBar keyword={keyword} setKeyword={setKeyword} />
+
+        <CreatePost onPostCreated={handleNewPost} token={token} />
+
+        {posts.length === 0 ? (
+          <p className="loading-text">Loading posts or no posts yet...</p>
+        ) : (
+          posts.map((item) => (
+            <Post
+              key={item.Post.id}
+              post={item}
+              onDelete={handleRemovePost}
+              token={token}
+            />
+          ))
+        )}
+      </>
+    );
+  };
+
+  // === 5. 主渲染 ===
   return (
     <div className="feed-container">
       <Toaster position="top-center" />
 
-      {/* === 顶部导航栏 (Navbar) === */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          width: "100%",
-          maxWidth: "600px",
-          alignItems: "center",
-          marginBottom: "20px",
-          borderBottom: "1px solid #eee", // 加条线更好看
-          paddingBottom: "10px",
-        }}
-      >
-        {/* 点击标题，无脑回首页 */}
-        <h1
-          style={{ color: "#333", margin: 0, cursor: "pointer" }}
-          onClick={() => setView("feed")}
-        >
-          FastForum
-        </h1>
+      {/* 🌟 导航栏组件 */}
+      <Navbar
+        token={token}
+        onLogout={handleLogout}
+        setView={setView}
+        setKeyword={setKeyword}
+      />
 
-        {/* 👇 右上角按钮逻辑 */}
-        {token ? (
-          // 如果已登录 -> 显示 Logout
-          <button
-            onClick={handleLogout}
-            style={{
-              padding: "8px 16px",
-              cursor: "pointer",
-              background: "#eee",
-              border: "none",
-              borderRadius: "4px",
-            }}
-          >
-            Logout
-          </button>
-        ) : (
-          // 如果没登录 -> 显示 Login 按钮
-          // 只有在 'feed' 模式下才显示 Login 按钮 (不然在登录页显示Login按钮很怪)
-          view === "feed" && (
-            <button
-              onClick={() => setView("login")} // 👈 点击切换视图
-              style={{
-                padding: "8px 16px",
-                background: "black",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                fontWeight: "bold",
-              }}
-            >
-              Login
-            </button>
-          )
-        )}
-      </div>
-
-      {/* === 主内容区 (根据 view 切换) === */}
-
-      {/* 1. 登录视图 */}
-      {view === "login" && !token && (
-        <div style={{ width: "100%", maxWidth: "400px", margin: "0 auto" }}>
-          <Login
-            onLogin={handleLoginSuccess}
-            onSwitchToRegister={() => setView("register")} // 切去注册
-          />
-          <p style={{ textAlign: "center", marginTop: "10px" }}>
-            <span
-              onClick={() => setView("feed")}
-              style={{ cursor: "pointer", color: "#666" }}
-            >
-              ← Back to Feed
-            </span>
-          </p>
-        </div>
-      )}
-
-      {/* 2. 注册视图 */}
-      {view === "register" && !token && (
-        <div style={{ width: "100%", maxWidth: "400px", margin: "0 auto" }}>
-          <Register
-            onSwitchToLogin={() => setView("login")} // 切回登录
-          />
-          <p style={{ textAlign: "center", marginTop: "10px" }}>
-            <span
-              onClick={() => setView("feed")}
-              style={{ cursor: "pointer", color: "#666" }}
-            >
-              ← Back to Feed
-            </span>
-          </p>
-        </div>
-      )}
-
-      {/* 3. 帖子流视图 (Feed) */}
-      {view === "feed" && (
-        <>
-          {/* 如果登录了，显示发帖框 */}
-          {token && <CreatePost onPostCreated={handleNewPost} token={token} />}
-
-          {/* 所有人都能看到帖子列表 */}
-          {posts.length === 0 ? (
-            <p style={{ textAlign: "center" }}>Loading posts...</p>
-          ) : (
-            posts.map((item) => (
-              <Post
-                key={item.Post.id}
-                post={item}
-                onDelete={handleRemovePost}
-                token={token}
-              />
-            ))
-          )}
-        </>
-      )}
+      {/* 根据 view 决定渲染什么 */}
+      {(view === "login" || view === "register") && !token
+        ? renderAuthView()
+        : renderFeed()}
     </div>
   );
 }

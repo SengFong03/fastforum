@@ -15,7 +15,7 @@ router = APIRouter(
 @router.get("/", response_model=List[schemas.PostOut])
 def get_posts(
     db: Session = Depends(get_db),
-    # current_user: int = Depends(oauth2.get_current_user),
+    current_user: int = Depends(oauth2.get_current_user),
     limit: int = 10,
     skip: int = 0,
     search: Optional[str] = "",
@@ -37,7 +37,7 @@ def get_posts(
     # SQL = SELECT posts.*, COUNT(votes.post_id) AS votes
     #       FROM posts LEFT JOIN votes ON posts.id = votes.post_id
     #       GROUP BY posts.id
-    posts = (
+    results = (
         db.query(models.Post, func.count(models.Vote.post_id).label("votes"))
         .join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True)
         .group_by(models.Post.id)
@@ -47,7 +47,39 @@ def get_posts(
         .offset(skip)
         .all()
     )
-    return posts
+    if not results:
+        return []
+    
+    # Get the post IDs from the current page results
+    current_page_post_ids = [post[0].id for post in results]
+
+    # Query to get votes by the current user for these posts
+    my_votes_query = (
+        db.query(models.Vote.post_id)
+        .filter(
+            models.Vote.post_id.in_(current_page_post_ids),
+            models.Vote.user_id == current_user.id
+        )
+        .all()
+    )
+
+    # Extract post IDs from the query result
+    my_voted_ids = {vote[0] for vote in my_votes_query}    
+
+    # Prepare the final response combining posts, votes, and is_liked
+    final_response = []
+    
+    # Build the response list
+    for post_obj, votes_count in results:
+        final_response.append({
+            "Post": post_obj,
+            "votes": votes_count,
+            # 🌟 核心判断：如果这个帖子的 ID 在我的点赞集合里，就是 True
+            "is_liked": post_obj.id in my_voted_ids
+        })
+
+    return final_response
+    
 
     # Using SQLAlchemy ORM to get posts for the current user only
     # posts = db.query(models.Post).filter(models.Post.owner_id == current_user.id).all()

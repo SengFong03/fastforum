@@ -18,6 +18,7 @@ class PostResponse(PostBase):
     owner_id: int
     owner: 'UserResponse'   # Forward reference
     comments: List['CommentResponse'] = []
+    ai_summary: Optional[str] = None
 
     model_config = {
         "from_attributes": True     #orm_mode = True
@@ -26,6 +27,10 @@ class PostResponse(PostBase):
 class PostOut(BaseModel):
     Post: PostResponse
     votes: int
+    is_liked : bool = False
+    model_config = {
+        "from_attributes": True     #orm_mode = True
+    }
 
 class UserCreate(BaseModel):
     email: EmailStr
