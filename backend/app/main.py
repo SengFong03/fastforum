@@ -21,7 +21,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # 2. 告诉 FastAPI：HTML 文件都在 templates 文件夹里
 templates = Jinja2Templates(directory="templates")
 
-origins = ["http://localhost:5173"]  # Allow all origins; adjust for production use
+origins = ["http://localhost:5173",
+           "https://fastforum-frontend.onrender.com"]  # Allow all origins; adjust for production use
                  # e.g., ["https://yourdomain.com"] for specific domains
 
 app.add_middleware(
