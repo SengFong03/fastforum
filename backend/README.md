@@ -1,53 +1,94 @@
-# FastForum 🚀
+# FastForum - Full Stack Social Platform
 
-**FastForum** is a full-stack social media application built with **FastAPI** and **Vanilla JavaScript**. It features a complete authentication system, real-time voting, and post management.
+![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)
+![React](https://img.shields.io/badge/React-18-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791.svg)
+![Deployed](https://img.shields.io/badge/Deployed-Render-46E3B7.svg)
 
-## ✨ Features
+A modern, full-stack social media application built with **FastAPI** and **React**, featuring secure authentication and AI-powered content summarization.
 
-* **User Authentication**: Secure Login & Registration using OAuth2 (JWT Tokens).
-* **Create Posts**: Users can publish new content instantly.
-* **Vote System**: Like/Unlike posts with real-time updates.
-* **Search**: Filter posts by title or content.
-* **Responsive UI**: Clean interface built with Bootstrap (SB Admin 2).
-* **Robust Backend**: Powered by FastAPI, SQLAlchemy, and PostgreSQL.
+---
+
+## 🚀 Live Demo
+
+### [👉 Click here to view the Live App](https://fastforum-frontend.onrender.com/)
+
+> **⚠️ Important Note regarding the Demo:**
+> Since this project is hosted on **Render's Free Tier**, the server puts itself to sleep after 15 minutes of inactivity.
+> **Please allow 30-50 seconds for the initial load.** Once it wakes up, it runs smoothly! ☕
+
+---
+
+## ✨ Key Features
+
+* **🔒 Secure Authentication:** Implemented OAuth2 flow with JWT tokens. Passwords are hashed using **Argon2** (modern standard) for maximum security.
+* **🤖 AI-Powered Summarization:** Integrated **Google Gemini** via **LangChain**. Users can click a button to get an on-demand summary of long posts.
+* **☁️ Cloud Deployment:** Fully deployed on **Render (Linux environment)** with automated CI/CD pipelines.
+* **🗄️ Robust Database:** Managed via **PostgreSQL** and **SQLAlchemy**, with **Alembic** handling schema migrations.
+* **💬 Interactive Community:** Users can create posts, vote, and view real-time updates.
+
+---
 
 ## 🛠️ Tech Stack
 
-* **Backend**: Python, FastAPI, Pydantic, SQLAlchemy
-* **Frontend**: HTML5, JavaScript (Fetch API), Bootstrap 4
-* **Database**: PostgreSQL
-* **Security**: BCrypt password hashing, JWT authorization
+### Backend
+* **Framework:** FastAPI (Python)
+* **Database ORM:** SQLAlchemy
+* **Migrations:** Alembic
+* **Validation:** Pydantic
+* **Security:** Pwdlib (Argon2), Python-Jose (JWT)
+* **AI Integration:** LangChain, Google Generative AI
 
-## 🚀 How to Run
+### Frontend
+* **Library:** React.js
+* **Styling:** CSS
+
+### DevOps & Infrastructure
+* **Cloud Provider:** Render
+* **Database:** PostgreSQL
+* **Environment Management:** Python venv
+
+---
+
+## 📸 Screenshots
+
+![Home Page](C:\Users\sengf\OneDrive\Desktop\projects\fastforum-project\screenshot.png)
+
+---
+
+## 🔧 Local Installation
+
+If you want to run this project locally:
 
 1.  **Clone the repository**
     ```bash
-    git clone [https://github.com/YOUR_USERNAME/FastForum.git](https://github.com/SengFong03/fastapi-social-api.git)
-    cd FastForum
+    git clone [https://github.com/SengFong03/fastforum.git](https://github.com/SengFong03/fastforum.git)
+    cd fastapi-social-api
     ```
 
-2.  **Install dependencies**
+2.  **Backend Setup**
     ```bash
+    cd backend
+    python -m venv venv
+    # Windows
+    .\venv\Scripts\activate
+    # Mac/Linux
+    source venv/bin/activate
+    
     pip install -r requirements.txt
     ```
 
-3.  **Configure Environment Variables**
-    Create a `.env` file in the root directory and add your database credentials:
-    ```env
-    DATABASE_HOSTNAME=localhost
-    DATABASE_PORT=5432
-    DATABASE_PASSWORD=your_password
-    DATABASE_NAME=fastapi
-    DATABASE_USERNAME=postgres
-    SECRET_KEY=your_secret_key
-    ALGORITHM=HS256
-    ACCESS_TOKEN_EXPIRE_MINUTES=30
-    ```
+3.  **Environment Variables**
+    Create a `.env` file in the `backend` folder and populate it with your database credentials and API keys.
 
-4.  **Run the App**
+4.  **Run the Server**
     ```bash
     uvicorn app.main:app --reload
     ```
 
-5.  **Access the App**
-    Open your browser and go to `http://127.0.0.1:8000`
+---
+
+## 📬 Contact
+
+Project Link: [https://github.com/SengFong03/fastforum.git](https://github.com/SengFong03/fastforum.git)
