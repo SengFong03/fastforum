@@ -12,4 +12,5 @@ pwdlib[argon2]
 python-multipart
 python-jose[cryptography]
 google-generativeai
+langchain-google-genai
 requests
